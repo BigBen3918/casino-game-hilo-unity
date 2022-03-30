@@ -1,6 +1,6 @@
 static class GlobalVariable
 {
-    public static string BaseUrl = "http://31.220.57.223:443/";
+    public static string BaseUrl = "http://45.132.242.139:443/";
 
     // Game Status Variable
     public static float _totalBalance;

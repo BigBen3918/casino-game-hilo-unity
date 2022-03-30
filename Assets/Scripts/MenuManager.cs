@@ -13,7 +13,7 @@ public class MenuManager : MonoBehaviour
     private static extern void GameController(string msg);
 
     [Header("Text")]
-    [SerializeField] TextMeshProUGUI _bet;
+    [SerializeField] TMP_InputField _bet;
     [SerializeField] TextMeshProUGUI _earn;
     [SerializeField] TextMeshProUGUI _myBalance;
     [SerializeField] TextMeshProUGUI _highX;
@@ -36,12 +36,17 @@ public class MenuManager : MonoBehaviour
     [SerializeField] Button _betIncrease;
     [SerializeField] Button _betDecrease;
 
+    [Header("GameObeject")]
+    [SerializeField] GameObject _beterror;
+
     private GameManager gameManager;
+    private Animator betErrorAnim;
 
     // Start is called before the first frame update
     void Start()
     {
         gameManager = FindObjectOfType<GameManager>();
+        betErrorAnim = _beterror.GetComponent<Animator>();
 
         _spinButton.onClick.AddListener(SpinHandler);
         _cashButton.onClick.AddListener(CashHandler);
@@ -56,6 +61,7 @@ public class MenuManager : MonoBehaviour
         _kaButton.onClick.AddListener(() => ChooseHandler(8));
         _betIncrease.onClick.AddListener(BetPlus);
         _betDecrease.onClick.AddListener(BetMinus);
+        _bet.onValueChanged.AddListener(betChange);
 
         GlobalVariable._bet = 100;
         GlobalVariable._gaming = false;
@@ -132,13 +138,13 @@ public class MenuManager : MonoBehaviour
         }
 
         // Bet Buttons Setting
-        _bet.text = GlobalVariable._bet.ToString("0.00");
-        if(GlobalVariable._bet == 1000)
+        _bet.text = GlobalVariable._bet.ToString();
+        if(GlobalVariable._bet == 100000)
         {
             _betIncrease.interactable = false;
             _betDecrease.interactable = true;
         }
-        if(GlobalVariable._bet == 100)
+        if(GlobalVariable._bet == 10)
         {
             _betIncrease.interactable = true;
             _betDecrease.interactable = false;
@@ -147,7 +153,7 @@ public class MenuManager : MonoBehaviour
         // earn money setting
         if(!GlobalVariable._spining)
         {
-            _earn.text = GlobalVariable._earn.ToString("0.00");
+            _earn.text = GlobalVariable._earn.ToString();
             _myBalance.text = GlobalVariable._totalBalance.ToString("0.00");
             _highX.text = "×" + GlobalVariable._highX.ToString();
             _highPercent.text = "%" + GlobalVariable._highPercent.ToString();
@@ -158,6 +164,7 @@ public class MenuManager : MonoBehaviour
 
     private void SpinHandler()
     {
+        Debug.Log(GlobalVariable._bet.ToString());
         if(GlobalVariable._totalBalance >= (float)GlobalVariable._bet)
         {
             gameManager.SpinCard(0);
@@ -182,19 +189,64 @@ public class MenuManager : MonoBehaviour
         {
             GlobalVariable._ChoosePoint = flag;
             gameManager.SpinCard(2);
+        } else
+        {
+            StartCoroutine(betting());
         }
+    }
+
+    IEnumerator betting()
+    {
+        Debug.Log("abc");
+        betErrorAnim.SetBool("beterror", true);
+        yield return new WaitForSeconds(2.5f);
+        betErrorAnim.SetBool("beterror", false);
     }
 
     private void BetPlus()
     {
-        GlobalVariable._bet = Mathf.Clamp(GlobalVariable._bet + 10, 100, 1000);
+        GlobalVariable._bet = Mathf.Clamp(GlobalVariable._bet + 10, 10, 100000);
         _betDecrease.interactable = true;
     }
 
     private void BetMinus()
     {
-        GlobalVariable._bet = Mathf.Clamp(GlobalVariable._bet - 10, 100, 1000);
+        GlobalVariable._bet = Mathf.Clamp(GlobalVariable._bet - 10, 10, 100000);
         _betIncrease.interactable = true;
+    }
+
+    void betChange(string inputData)
+    {
+        if (string.IsNullOrEmpty(inputData))
+        {
+            GlobalVariable._bet = 10;
+            _bet.text = "10";
+
+            return;
+        }
+        else
+        {
+            if (int.Parse(inputData) > 100000)
+            {
+                GlobalVariable._bet = 100000;
+                _bet.text = "100000";
+
+                return;
+            }
+
+            if (int.Parse(inputData) < 10)
+            {
+                GlobalVariable._bet = 10;
+                _bet.text = "10";
+
+                return;
+            }
+        }
+
+        GlobalVariable._bet = int.Parse(inputData);
+        _bet.text = GlobalVariable._bet.ToString();
+        _betIncrease.interactable = true;
+        _betDecrease.interactable = true;
     }
 
     public void RequestToken(string data)
@@ -203,4 +255,6 @@ public class MenuManager : MonoBehaviour
         GlobalVariable._token = usersInfo["token"];
         GlobalVariable._totalBalance = float.Parse(usersInfo["amount"]);
     }
+
+    
 }
